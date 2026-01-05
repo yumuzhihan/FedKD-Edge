@@ -8,3 +8,11 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Datasets and model weights
+data/
+weights/
+
+# Logs and results
+logs/
+results/
