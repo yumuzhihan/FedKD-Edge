@@ -321,7 +321,7 @@ def main():
     logger.info(f"使用计算设备: {DEVICE}")
 
     # 运行 CIFAR-10
-    run_experiment("cifar10", "teacher_cnn", epochs=200)
+    run_experiment("cifar10", "teacher_cnn", epochs=300)
 
     # 运行 MNIST
     run_experiment("mnist", "teacher_cnn", epochs=30)

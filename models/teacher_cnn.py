@@ -37,16 +37,15 @@ class TeacherCNN(nn.Module):
         self.conv1 = conv_block(3, 64)
         self.conv2 = conv_block(64, 128)
         self.conv3 = conv_block(128, 256)
-        self.conv4 = conv_block(256, 512)
-
-        self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.conv4 = conv_block(256, 256)
 
         self.classifier = nn.Sequential(
+            nn.Flatten(),
             nn.Dropout(0.2),
-            nn.Linear(512, 512),
+            nn.Linear(1024, 1536),
             nn.ReLU(inplace=True),
             nn.Dropout(0.2),
-            nn.Linear(512, num_classes),
+            nn.Linear(1536, num_classes),
         )
 
         self._initialize_weights()
@@ -57,8 +56,6 @@ class TeacherCNN(nn.Module):
         x = self.conv2(x)
         x = self.conv3(x)
         x = self.conv4(x)
-        x = self.avg_pool(x)
-        x = torch.flatten(x, 1)
         x = self.classifier(x)
         return x
 
