@@ -13,7 +13,7 @@ def count_parameters(model):
 
 
 class StudentCNN(nn.Module):
-    def __init__(self, input_channels=3, num_classes=10):
+    def __init__(self, input_channels=3, num_classes=10, log_output=False):
         super(StudentCNN, self).__init__()
 
         self.logger = LoggerFactory.get_logger(self.__class__.__name__)
@@ -41,7 +41,8 @@ class StudentCNN(nn.Module):
         )
 
         self._initialize_weights()
-        self.logger.info(f"模型初始化完成，参数数量: {count_parameters(self)}")
+        if log_output:
+            self.logger.info(f"模型初始化完成，参数数量: {count_parameters(self)}")
 
     def forward(self, x):
         x = self.conv1(x)

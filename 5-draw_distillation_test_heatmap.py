@@ -19,7 +19,7 @@ def draw_heatmap():
 
     data_count = len(temps)
 
-    # 准备热力图，横轴是 TEMP，纵轴是 ALPHA，值是 Gain
+    # 横轴是 TEMP，纵轴是 ALPHA，值是 Gain
     temp_values = sorted(set(temps))
     alpha_values = sorted(set(alphas))
     heatmap_data = [
