@@ -12,6 +12,7 @@ wheels/
 # Datasets and model weights
 data/
 weights/
+!src/data
 
 # Logs and results
 logs/

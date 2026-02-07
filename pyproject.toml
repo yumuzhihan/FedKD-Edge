@@ -10,6 +10,8 @@ dependencies = [
     "pandas>=2.3.3",
     "torch>=2.9.1",
     "torchvision>=0.24.1",
+    "numpy>=2.4.1",
+    "tensorboard>=2.20.0",
 ]
 
 [[tool.uv.index]]
@@ -20,3 +22,10 @@ explicit = true
 [[tool.uv.index]]
 name = "tuna"
 url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
+
+[dependency-groups]
+dev = ["pyrefly>=0.49.0"]
+
+
+[tool.pyrefly]
+search_path = ["./"]
