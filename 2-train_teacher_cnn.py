@@ -11,19 +11,18 @@ from torch.amp import grad_scaler, autocast_mode
 from pandas import DataFrame
 
 sys.path.append("..")
-from models.teacher_cnn import TeacherCNN
-from utils.get_logger import LoggerFactory
+from src.models.teacher_cnn import TeacherCNN
+from src.utils.get_logger import LoggerFactory
 
 # --- 配置参数 ---
 BATCH_SIZE = 128
 LEARNING_RATE = 0.1
-NUM_CLASSES = 10
+# NUM_CLASSES = 10
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 logger = LoggerFactory.get_logger("train_teacher_cnn")
 data_root_path = Path(__file__).parent / "data"
 
-# 启用 CuDNN 的自动调优以提升性能
 if torch.cuda.is_available():
     torch.backends.cudnn.benchmark = True
 
@@ -125,6 +124,42 @@ def get_transforms(dataset_name="cifar10"):
                 transforms.Normalize(
                     (0.1307, 0.1307, 0.1307), (0.3081, 0.3081, 0.3081)
                 ),
+            ]
+        )
+    elif dataset_name == "fashionmnist":
+        train_transform = transforms.Compose(
+            [
+                transforms.Resize(32),
+                transforms.Grayscale(num_output_channels=3),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize((0.2860,), (0.3530,)),
+                Cutout(n_holes=1, length=8),
+            ]
+        )
+        test_transform = transforms.Compose(
+            [
+                transforms.Resize(32),
+                transforms.Grayscale(num_output_channels=3),
+                transforms.ToTensor(),
+                transforms.Normalize((0.2860,), (0.3530,)),
+            ]
+        )
+    elif dataset_name == "cifar100":
+        stats = ((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761))
+        train_transform = transforms.Compose(
+            [
+                transforms.RandomCrop(32, padding=4),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize(*stats),
+                Cutout(n_holes=1, length=8),
+            ]
+        )
+        test_transform = transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize(*stats),
             ]
         )
     else:
@@ -254,15 +289,21 @@ def evaluate(model, test_loader, criterion, device):
     return epoch_loss, accuracy
 
 
-def run_experiment(dataset_name, model_name_suffix, epochs=100):
+def run_experiment(dataset_name, model_name_suffix, epochs=100, num_classes=10):
     logger.info(f"====== 开始训练任务: {dataset_name.upper()} ======")
 
     train_transform, test_transform = get_transforms(dataset_name)
 
     if dataset_name == "cifar10":
         DatasetClass = torchvision.datasets.CIFAR10
-    else:
+    elif dataset_name == "mnist":
         DatasetClass = torchvision.datasets.MNIST
+    elif dataset_name == "fashionmnist":
+        DatasetClass = torchvision.datasets.FashionMNIST
+    elif dataset_name == "cifar100":
+        DatasetClass = torchvision.datasets.CIFAR100
+    else:
+        raise ValueError("Unknown dataset")
 
     train_ds = DatasetClass(
         root=data_root_path, train=True, download=True, transform=train_transform
@@ -277,7 +318,7 @@ def run_experiment(dataset_name, model_name_suffix, epochs=100):
         test_ds, batch_size=BATCH_SIZE, shuffle=False, num_workers=4, pin_memory=True
     )
 
-    model = TeacherCNN(num_classes=NUM_CLASSES).to(DEVICE)
+    model = TeacherCNN(num_classes=num_classes).to(DEVICE)
 
     criterion = nn.CrossEntropyLoss(label_smoothing=0.1)  # 标签平滑，加强泛化能力
     optimizer = optim.SGD(
@@ -321,10 +362,15 @@ def main():
     logger.info(f"使用计算设备: {DEVICE}")
 
     # 运行 CIFAR-10
-    run_experiment("cifar10", "teacher_cnn", epochs=300)
+    # run_experiment("cifar10", "teacher_cnn", epochs=300)
 
     # 运行 MNIST
-    run_experiment("mnist", "teacher_cnn", epochs=30)
+    # run_experiment("mnist", "teacher_cnn", epochs=30)
+
+    # 运行 FashionMNIST
+    # run_experiment("fashionmnist", "teacher_cnn", epochs=50)
+
+    run_experiment("cifar100", "teacher_cnn", epochs=300, num_classes=100)
 
 
 if __name__ == "__main__":

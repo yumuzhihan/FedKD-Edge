@@ -8,7 +8,6 @@ import copy
 from typing import Optional
 from pathlib import Path
 from torch.utils.data import DataLoader, Subset, Dataset
-from torchvision import datasets
 
 from src.utils.get_logger import LoggerFactory
 from src.models.student_cnn import StudentCNN
@@ -75,7 +74,7 @@ def generic_update_handler(args):
         batch_size=config["local_bs"],
         shuffle=True,
         num_workers=0,
-        pin_memory=True,
+        pin_memory=False,
     )
 
     # 1. 动态获取策略类
@@ -83,9 +82,10 @@ def generic_update_handler(args):
     if strategy_name not in TRAINER_MAP:
         raise ValueError(f"Unknown strategy: {strategy_name}")
     TrainerClass = TRAINER_MAP[strategy_name]
+    num_classes = config.get("num_classes", 10)
 
     # 2. 实例化 Trainer
-    trainer = TrainerClass(config, device, client_id, ldr_train)
+    trainer = TrainerClass(config, device, client_id, ldr_train, num_classes)
 
     # 3. 加载权重
     trainer.load_weights(payload["global_state"], payload)
@@ -121,7 +121,7 @@ class FederatedServer:
         self.dataset_test: Optional[Dataset] = None
 
         # 2. 加载数据分区
-        self._load_partitions()
+        self._load_partitions(self.config["client_classes"])
 
         self._init_test_dataset()
 
@@ -133,7 +133,9 @@ class FederatedServer:
         logger.info(f"Initializing models for strategy: {self.strategy}")
 
         # --- A. Global Student (所有策略都需要) ---
-        self.net_glob = StudentCNN().to(self.device)
+        self.net_glob = StudentCNN(num_classes=self.config["num_classes"]).to(
+            self.device
+        )
         self.w_glob = self.net_glob.state_dict()
 
         # --- B. Teacher (LogitKD, FeatureKD, Hybrid 需要) ---
@@ -143,7 +145,9 @@ class FederatedServer:
                 self.weights_dir
                 / f"{self.config['dataset'].lower()}_teacher_cnn_best.pth"
             )
-            net_teacher = TeacherCNN().to(self.device)
+            net_teacher = TeacherCNN(num_classes=self.config["num_classes"]).to(
+                self.device
+            )
             if teacher_path.exists():
                 logger.info(f"Loading Teacher weights from {teacher_path}")
                 net_teacher.load_state_dict(
@@ -167,12 +171,12 @@ class FederatedServer:
             self.w_adapter = {k: v.cpu() for k, v in net_adapter.state_dict().items()}
             del net_adapter
 
-    def _load_partitions(self):
+    def _load_partitions(self, client_num=2):
         """加载 Non-IID 数据分区"""
         partition_file = (
             self.data_root
             / "partitions"
-            / f"noniid_{self.config['dataset']}_k{self.config['num_users']}_c2.pkl"
+            / f"noniid_{self.config['dataset']}_k{self.config['num_users']}_c{client_num}.pkl"
         )
         if not partition_file.exists():
             raise FileNotFoundError(f"Partition file not found: {partition_file}")
@@ -197,7 +201,7 @@ class FederatedServer:
 
         # 优化文件名：包含关键蒸馏参数
         param_suffix = f"T{self.config['kd_T']}_ka{self.config['kd_alpha']}_fa{self.config['feat_alpha']}"
-        self.csv_filename = f"log_{self.strategy}_{self.config['dataset']}_seed{self.config['seed']}_{param_suffix}_{timestamp}.csv"
+        self.csv_filename = f"log_{self.strategy}_{self.config['dataset']}_seed{self.config['seed']}_rounds{self.config["rounds"]}_hybrid{self.config["hybrid_bata"]}_{param_suffix}_{timestamp}.csv"
 
         self.csv_path = self.results_dir / self.csv_filename
 
@@ -369,7 +373,7 @@ class FederatedServer:
 
         # 7. 保存最终模型
         param_suffix = f"T{self.config['kd_T']}_ka{self.config['kd_alpha']}_fa{self.config['feat_alpha']}"
-        save_name = f"{self.strategy}_{self.config['dataset']}_seed{self.config['seed']}_rounds{self.config["rounds"]}_{param_suffix}.pth"
+        save_name = f"{self.strategy}_{self.config['dataset']}_seed{self.config['seed']}_rounds{self.config["rounds"]}_hybrid{self.config["hybrid_bata"]}_{param_suffix}.pth"
         torch.save(
             self.net_glob.state_dict(), self.results_dir / ("model_" + save_name)
         )

@@ -24,18 +24,28 @@ class FastTensorDataset(Dataset):
             if isinstance(data, torch.Tensor):
                 data = data.numpy()
             data = np.expand_dims(data, axis=-1)
+        elif dataset_name == "fashionmnist":
+            base_dataset = datasets.FashionMNIST(root, train=train, download=False)
+            data = base_dataset.data
+            targets = base_dataset.targets
+            if isinstance(data, torch.Tensor):
+                data = data.numpy()
+            data = np.expand_dims(data, axis=-1)
+        elif dataset_name == "cifar100":
+            base_dataset = datasets.CIFAR100(root, train=train, download=False)
+            data = base_dataset.data
+            targets = base_dataset.targets
 
         if data is None or targets is None:
             raise ValueError(f"Unknown dataset name: {dataset_name}")
 
-        # 2. 【核心优化】立刻转为 Float Tensor 并归一化到 [0, 1]
-        # 这一步会消耗一些内存 (CIFAR10 约 600MB)，但彻底消除了训练时的 CPU 转换开销
         self.data = (
             torch.from_numpy(data).permute(0, 3, 1, 2).contiguous().float().div(255.0)
         )
 
-        # 针对 MNIST 的特殊处理
         if dataset_name == "mnist":
+            self.data = self.data.repeat(1, 3, 1, 1)
+        elif dataset_name == "fashionmnist":
             self.data = self.data.repeat(1, 3, 1, 1)
 
         self.targets = torch.tensor(targets, dtype=torch.long)
@@ -62,7 +72,6 @@ def get_fast_transforms(dataset_name="cifar10"):
     test_transform = None
 
     if dataset_name == "cifar10":
-        # 注意：这里不需要 ToTensor，也不需要 div(255)，因为 Dataset 里已经做好了
         train_transform = transforms.Compose(
             [
                 transforms.RandomCrop(32, padding=4),
@@ -97,6 +106,36 @@ def get_fast_transforms(dataset_name="cifar10"):
                 transforms.Normalize(
                     (0.1307, 0.1307, 0.1307), (0.3081, 0.3081, 0.3081)
                 ),
+            ]
+        )
+    elif dataset_name == "fashionmnist":
+        train_transform = transforms.Compose(
+            [
+                transforms.Resize(32),
+                transforms.Grayscale(num_output_channels=3),
+                transforms.RandomHorizontalFlip(),
+                transforms.Normalize((0.2860,), (0.3530,)),
+            ]
+        )
+        test_transform = transforms.Compose(
+            [
+                transforms.Resize(32),
+                transforms.Grayscale(num_output_channels=3),
+                transforms.Normalize((0.2860,), (0.3530,)),
+            ]
+        )
+    elif dataset_name == "cifar100":
+        stats = ((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761))
+        train_transform = transforms.Compose(
+            [
+                transforms.RandomCrop(32, padding=4),
+                transforms.RandomHorizontalFlip(),
+                transforms.Normalize(*stats),
+            ]
+        )
+        test_transform = transforms.Compose(
+            [
+                transforms.Normalize(*stats),
             ]
         )
 

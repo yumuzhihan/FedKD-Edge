@@ -6,10 +6,12 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 DEFAULT_CONFIG = {
     # --- 基础设置 ---
     "strategy": "fedavg",  # 策略: fedavg, logit_kd, feature_kd, hybrid_kd
-    "dataset": "CIFAR10",  # CIFAR10, MNIST
+    "dataset": "CIFAR10",  # CIFAR10, MNIST, FashionMNIST, CIFAR100
     "device": "cuda",  # cuda, cpu
     "seed": 42,  # 随机种子
     "num_workers": 10,  # 多进程数量
+    "num_classes": 10,  # 类别数量
+    "client_classes": 2,  # 每个客户端的类别数
     # --- 联邦学习设置 ---
     "rounds": 100,  # 总通讯轮次
     "num_users": 10,  # 客户端总数

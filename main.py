@@ -54,6 +54,12 @@ def parse_args():
     parser.add_argument(
         "--num_workers", type=int, default=DEFAULT_CONFIG["num_workers"]
     )
+    parser.add_argument(
+        "--num_classes", type=int, default=DEFAULT_CONFIG["num_classes"]
+    )
+    parser.add_argument(
+        "--client_classes", type=int, default=DEFAULT_CONFIG["client_classes"]
+    )
 
     # 3. 联邦参数
     parser.add_argument("--rounds", type=int, default=DEFAULT_CONFIG["rounds"])

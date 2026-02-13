@@ -9,9 +9,9 @@ from src.trainers.base_trainer import BaseTrainer
 
 
 class FedKDHybridTrainer(BaseTrainer):
-    def __init__(self, config, device, client_id, train_loader):
+    def __init__(self, config, device, client_id, train_loader, num_classes):
         # 1. 先调用父类初始化 (这会初始化 model 和默认 optimizer)
-        super().__init__(config, device, client_id, train_loader)
+        super().__init__(config, device, client_id, train_loader,num_classes)
 
         # 2. 初始化 Teacher (冻结)
         self.teacher = TeacherCNN().to(device)

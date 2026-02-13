@@ -3,8 +3,8 @@ from src.trainers.base_trainer import BaseTrainer
 
 
 class FedAvgTrainer(BaseTrainer):
-    def __init__(self, config, device, client_id, train_loader):
-        super().__init__(config, device, client_id, train_loader)
+    def __init__(self, config, device, client_id, train_loader, num_classes):
+        super().__init__(config, device, client_id, train_loader, num_classes)
 
     def compute_loss(self, *args):
         images, labels = args[0], args[1]

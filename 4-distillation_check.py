@@ -9,22 +9,22 @@ import pandas as pd
 import numpy as np
 import random
 
-from models.student_cnn import StudentCNN
-from models.teacher_cnn import TeacherCNN
-from utils.get_logger import LoggerFactory
+from src.models.student_cnn import StudentCNN
+from src.models.teacher_cnn import TeacherCNN
+from src.utils.get_logger import LoggerFactory
 
 logger = LoggerFactory.get_logger("distillation_check")
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 128
-EPOCHS = 30
+EPOCHS = 150
 LR = 0.05
 
 TEMP = 1.0
 ALPHA = 0.8
 
 # RUN_BASELINE = True  # 是否运行 Baseline 组
-RUN_BASELINE = False
+RUN_BASELINE = True
 # FIXED_BASELINE_ACC = 0.0  # 如果不运行 Baseline 组，则使用固定的准确率作为对比
 FIXED_BASELINE_ACC = 76.44  # 30 epochs
 # FIXED_BASELINE_ACC = 0.0  # 50 epochs
@@ -106,7 +106,7 @@ def get_dataloaders():
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-            Cutout(n_holes=1, length=8),
+            # Cutout(n_holes=1, length=8),
         ]
     )
     transform_test = transforms.Compose(

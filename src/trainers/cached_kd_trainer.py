@@ -10,10 +10,10 @@ from src.utils.get_logger import LoggerFactory
 
 
 class CachedKDTrainer(BaseTrainer):
-    def __init__(self, config, device, client_id, train_loader):
-        super().__init__(config, device, client_id, train_loader)
+    def __init__(self, config, device, client_id, train_loader, num_classes):
+        super().__init__(config, device, client_id, train_loader, num_classes)
 
-        self.teacher = TeacherCNN().to(device)
+        self.teacher = TeacherCNN(num_classes=num_classes).to(device)
         self.teacher.eval()
         self.is_cached = False
 

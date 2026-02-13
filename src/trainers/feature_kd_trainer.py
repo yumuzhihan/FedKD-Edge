@@ -9,9 +9,9 @@ from src.models.feature_adapter import FeatureAdapter
 
 
 class FeatureKDTrainer(BaseTrainer):
-    def __init__(self, config, device, client_id, train_loader):
-        super().__init__(config, device, client_id, train_loader)
-        self.teacher = TeacherCNN().to(device)
+    def __init__(self, config, device, client_id, train_loader, num_classes):
+        super().__init__(config, device, client_id, train_loader, num_classes)
+        self.teacher = TeacherCNN(num_classes=num_classes).to(device)
         self.feature_adapter = FeatureAdapter(
             in_channels=config["student_channels"],
             out_channels=config["teacher_channels"],

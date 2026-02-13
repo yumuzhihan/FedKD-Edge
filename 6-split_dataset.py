@@ -3,12 +3,21 @@ from torchvision import datasets
 import numpy as np
 import pickle
 
-from utils.get_logger import LoggerFactory
+from src.utils.get_logger import LoggerFactory
 
 K = 10
 DATA_ROOT_DIR = Path(__file__).parent / "data"
 PARTITION_DIR = DATA_ROOT_DIR / "partitions"
-CLASSES_PER_USER = 2
+
+# 不同数据集的默认配置
+DATASET_CONFIG = {
+    "MNIST": {"classes_per_user": 2},
+    "CIFAR10": {"classes_per_user": 2},
+    "FashionMNIST": {"classes_per_user": 2},
+    "CIFAR100": {
+        "classes_per_user": 10
+    },  # CIFAR-100 有 100 个类别，每个用户分配 10 个类别
+}
 
 PARTITION_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -21,6 +30,8 @@ def non_iid_split(dataset, num_users, classes_per_user):
     if isinstance(dataset, datasets.MNIST):
         labels = dataset.train_labels
     elif isinstance(dataset, datasets.CIFAR10):
+        labels = dataset.targets
+    elif isinstance(dataset, datasets.CIFAR100):
         labels = dataset.targets
     else:
         labels = np.array(dataset.targets)
@@ -56,7 +67,13 @@ def split_dataset(dataset: str = "MNIST"):
     train_dataset = None
     test_dataset = None
 
-    partition_file = PARTITION_DIR / f"noniid_{dataset}_k{K}_c{CLASSES_PER_USER}.pkl"
+    # 获取数据集配置
+    if dataset not in DATASET_CONFIG:
+        logger.error(f"未知数据集: {dataset}")
+        return
+
+    classes_per_user = DATASET_CONFIG[dataset]["classes_per_user"]
+    partition_file = PARTITION_DIR / f"noniid_{dataset}_k{K}_c{classes_per_user}.pkl"
 
     if partition_file.exists():
         logger.info(f"数据集 {dataset} 分割文件已存在，直接读取")
@@ -76,6 +93,20 @@ def split_dataset(dataset: str = "MNIST"):
         test_dataset = datasets.CIFAR10(
             DATA_ROOT_DIR, train=False, download=True, transform=None
         )
+    elif dataset == "FashionMNIST":
+        train_dataset = datasets.FashionMNIST(
+            DATA_ROOT_DIR, train=True, download=True, transform=None
+        )
+        test_dataset = datasets.FashionMNIST(
+            DATA_ROOT_DIR, train=False, download=True, transform=None
+        )
+    elif dataset == "CIFAR100":
+        train_dataset = datasets.CIFAR100(
+            DATA_ROOT_DIR, train=True, download=True, transform=None
+        )
+        test_dataset = datasets.CIFAR100(
+            DATA_ROOT_DIR, train=False, download=True, transform=None
+        )
 
     if not train_dataset or not test_dataset:
         logger.error(f"数据集 {dataset} 读取失败！")
@@ -83,7 +114,7 @@ def split_dataset(dataset: str = "MNIST"):
 
     logger.info(f"数据集 {dataset} 读取完毕！")
 
-    user_groups = non_iid_split(train_dataset, K, classes_per_user=CLASSES_PER_USER)
+    user_groups = non_iid_split(train_dataset, K, classes_per_user=classes_per_user)
 
     with open(partition_file, "wb") as f:
         pickle.dump(user_groups, f)
@@ -93,5 +124,7 @@ def split_dataset(dataset: str = "MNIST"):
 
 
 if __name__ == "__main__":
-    split_dataset()
-    split_dataset("CIFAR10")
+    # split_dataset("MNIST")
+    # split_dataset("CIFAR10")
+    # split_dataset("FashionMNIST")
+    split_dataset("CIFAR100")

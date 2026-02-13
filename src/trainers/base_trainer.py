@@ -12,14 +12,14 @@ class BaseTrainer:
     联邦学习训练器基类
     """
 
-    def __init__(self, config, device, client_id, train_loader):
+    def __init__(self, config, device, client_id, train_loader, num_classes):
         self.config = config
         self.device = device
         self.client_id = client_id
 
         self.train_loader = train_loader
 
-        self.model = StudentCNN().to(device)
+        self.model = StudentCNN(num_classes=num_classes).to(device)
         self.model.train()
 
         self.optimizer = optim.SGD(
