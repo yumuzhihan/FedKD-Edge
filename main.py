@@ -16,6 +16,7 @@ sys.path.append(str(Path(__file__).parent))
 
 from src.configs.config import DEFAULT_CONFIG
 from src.server.worker import FederatedServer
+from src.server.checkpoint import CheckpointManager
 from src.utils.get_logger import LoggerFactory
 
 logger = LoggerFactory.get_logger("Main")
@@ -68,6 +69,7 @@ def parse_args():
     parser.add_argument("--local_ep", type=int, default=DEFAULT_CONFIG["local_ep"])
     parser.add_argument("--local_bs", type=int, default=DEFAULT_CONFIG["local_bs"])
     parser.add_argument("--lr", type=float, default=DEFAULT_CONFIG["lr"])
+    parser.add_argument("--momentum", type=float, default=DEFAULT_CONFIG["momentum"])
 
     # 4. 蒸馏参数 (Logit)
     parser.add_argument(
@@ -90,6 +92,18 @@ def parse_args():
         default=DEFAULT_CONFIG["feat_alpha"],
         help="Weight for Feature MSE Loss",
     )
+    parser.add_argument(
+        "--student_channels",
+        type=int,
+        default=DEFAULT_CONFIG["student_channels"],
+        help="Student model channel size",
+    )
+    parser.add_argument(
+        "--teacher_channels",
+        type=int,
+        default=DEFAULT_CONFIG["teacher_channels"],
+        help="Teacher model channel size",
+    )
 
     # 6. hybrid 参数
     parser.add_argument(
@@ -101,7 +115,34 @@ def parse_args():
 
     # 路径覆盖 (可选)
     parser.add_argument(
+        "--data_root", type=str, default=DEFAULT_CONFIG["data_root"]
+    )
+    parser.add_argument(
+        "--weights_dir", type=str, default=DEFAULT_CONFIG["weights_dir"]
+    )
+    parser.add_argument(
         "--results_dir", type=str, default=DEFAULT_CONFIG["results_dir"]
+    )
+
+    # 检查点参数
+    parser.add_argument(
+        "--resume",
+        type=str,
+        default=None,
+        help="Path to checkpoint file to resume from. "
+        "If 'auto', automatically finds the latest matching checkpoint.",
+    )
+    parser.add_argument(
+        "--checkpoint_every",
+        type=int,
+        default=DEFAULT_CONFIG["checkpoint_every"],
+        help="Save checkpoint every N rounds.",
+    )
+    parser.add_argument(
+        "--checkpoint_dir",
+        type=str,
+        default=DEFAULT_CONFIG["checkpoint_dir"],
+        help="Directory to save/load checkpoints.",
     )
 
     args = parser.parse_args()
@@ -129,7 +170,34 @@ def main():
     # 5. 实例化并运行 Server
     try:
         server = FederatedServer(config)
-        server.run()
+
+        # 处理检查点路径
+        resume_path = None
+        if config.get("resume"):
+            if config["resume"] == "auto":
+                # 自动查找最新检查点
+                checkpoint_dir = Path(
+                    config.get("checkpoint_dir")
+                    or Path(config["results_dir"]) / "checkpoints"
+                )
+                resume_path = CheckpointManager.find_latest_checkpoint(
+                    checkpoint_dir,
+                    config["strategy"],
+                    config["dataset"],
+                    config["seed"],
+                )
+                if resume_path is None:
+                    logger.warning(
+                        "No matching checkpoint found. Starting from scratch."
+                    )
+                else:
+                    logger.info(f"Auto-found checkpoint: {resume_path}")
+            else:
+                resume_path = Path(config["resume"])
+                if not resume_path.exists():
+                    raise FileNotFoundError(f"Checkpoint not found: {resume_path}")
+
+        server.run(resume_checkpoint=resume_path)
     except Exception as e:
         logger.error("Training crashed!", exc_info=True)
         sys.exit(1)

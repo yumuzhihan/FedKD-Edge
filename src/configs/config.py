@@ -34,4 +34,7 @@ DEFAULT_CONFIG = {
     "data_root": str(PROJECT_ROOT / "data"),
     "weights_dir": str(PROJECT_ROOT / "weights"),
     "results_dir": str(PROJECT_ROOT / "results" / "unified_logs"),
+    # --- 检查点设置 ---
+    "checkpoint_every": 1,  # 每N轮保存检查点
+    "checkpoint_dir": None,  # None时使用 results_dir/checkpoints
 }

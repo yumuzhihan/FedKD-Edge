@@ -5,6 +5,7 @@ import time
 import csv
 import numpy as np
 import copy
+import re
 from typing import Optional
 from pathlib import Path
 from torch.utils.data import DataLoader, Subset, Dataset
@@ -18,6 +19,7 @@ from src.trainers import (
     CachedKDTrainer,
     FedAvgTrainer,
 )
+from src.server.checkpoint import CheckpointState, CheckpointManager
 
 logger = LoggerFactory.get_logger("FedServer")
 
@@ -220,6 +222,100 @@ class FederatedServer:
                 ]
             )
 
+    def restore_from_checkpoint(self, checkpoint: CheckpointState):
+        """从检查点恢复服务器状态"""
+        logger.info(f"Restoring from checkpoint: round {checkpoint.round_idx + 1}")
+
+        # 恢复全局模型权重
+        self.net_glob.load_state_dict(checkpoint.w_glob)
+        self.w_glob = self.net_glob.state_dict()
+
+        # 恢复 Adapter 权重（如果存在）
+        if checkpoint.w_adapter is not None:
+            if self.w_adapter is None:
+                raise RuntimeError(
+                    f"Checkpoint contains adapter weights but current config "
+                    f"({self.config['strategy']}) does not use adapter."
+                )
+            self.w_adapter = checkpoint.w_adapter
+
+        # 验证 CSV 文件存在且格式正确
+        csv_path = Path(checkpoint.csv_path)
+        if not csv_path.exists():
+            logger.warning(f"Checkpoint CSV not found at {csv_path}. Recreating...")
+            self._init_csv_logger()
+        else:
+            self.csv_path = csv_path
+            # 验证CSV格式
+            with open(self.csv_path, "r") as f:
+                reader = csv.reader(f)
+                header = next(reader)
+                expected_header = [
+                    "Round",
+                    "Client_ID",
+                    "Train_Loss",
+                    "Train_Acc",
+                    "Eval_Loss",
+                    "Eval_Acc",
+                    "Time_Sec",
+                ]
+                if header != expected_header:
+                    raise ValueError(
+                        f"CSV header mismatch: {header} vs {expected_header}"
+                    )
+
+        logger.info("Checkpoint restoration complete.")
+
+    def get_resume_round(self, checkpoint: CheckpointState) -> int:
+        """获取恢复后的起始轮次"""
+        return checkpoint.round_idx + 1
+
+    def save_checkpoint(self, round_idx: int, checkpoint_dir: Path):
+        """保存当前轮次的检查点"""
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
+        # 构建文件名
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        filename = (
+            f"checkpoint_{self.config['strategy']}_{self.config['dataset']}_"
+            f"seed{self.config['seed']}_round{round_idx}_{timestamp}.pth"
+        )
+        checkpoint_path = checkpoint_dir / filename
+
+        # 创建并保存检查点状态
+        state = CheckpointState.from_server(self, round_idx)
+        state.save(checkpoint_path)
+
+        logger.info(f"Checkpoint saved: {checkpoint_path}")
+
+        # 清理旧检查点（保留最近 N 个）
+        self._cleanup_old_checkpoints(checkpoint_dir, keep_recent=3)
+
+        return checkpoint_path
+
+    def _cleanup_old_checkpoints(
+        self, checkpoint_dir: Path, keep_recent: int = 3
+    ):
+        """清理旧的检查点文件，保留最近的 N 个"""
+        # 收集所有匹配的检查点，按修改时间排序
+        checkpoints = []
+        pattern = re.compile(
+            rf"checkpoint_{self.config['strategy']}_{self.config['dataset']}_"
+            rf"seed{self.config['seed']}_round\d+_\d+\.pth"
+        )
+        for f in checkpoint_dir.glob("checkpoint_*.pth"):
+            if pattern.match(f.name):
+                checkpoints.append((f.stat().st_mtime, f))
+
+        if len(checkpoints) <= keep_recent:
+            return
+
+        # 删除最旧的检查点
+        checkpoints.sort()
+        for _, path in checkpoints[:-keep_recent]:
+            logger.info(f"Removing old checkpoint: {path}")
+            path.unlink()
+
     def evaluate(self):
         """Server 端评估函数"""
         if self.dataset_test is None:
@@ -262,9 +358,35 @@ class FederatedServer:
                 w_avg[k] += w_locals[i][k] * weight
         return w_avg
 
-    def run(self):
+    def run(self, resume_checkpoint: Optional[Path] = None):
+        """
+        执行联邦学习训练循环。
+
+        Args:
+            resume_checkpoint: 如果提供，从该检查点恢复训练
+        """
         logger.info(f"Start Federated Learning ({self.strategy})...")
         training_start_time = time.time()
+
+        # === 检查点恢复逻辑 ===
+        start_round = 0
+        if resume_checkpoint is not None:
+            checkpoint = CheckpointState.load(resume_checkpoint)
+
+            # 验证兼容性
+            compat_warnings = CheckpointManager.validate_checkpoint(checkpoint, self.config)
+            for warn in compat_warnings:
+                logger.warning(warn)
+
+            if checkpoint.round_idx >= self.config["rounds"]:
+                logger.info("Checkpoint already at final round. Nothing to do.")
+                return
+
+            # 恢复状态
+            self.restore_from_checkpoint(checkpoint)
+            start_round = self.get_resume_round(checkpoint)
+
+            logger.info(f"Resuming from round {start_round}/{self.config['rounds']}")
 
         # 启动多进程 Pool
         # 注意: initargs 传入 data_root 确保子进程能找到路径
@@ -274,7 +396,7 @@ class FederatedServer:
             initargs=(self.config["dataset"], self.data_root),
         ) as pool:
 
-            for round_idx in range(self.config["rounds"]):
+            for round_idx in range(start_round, self.config["rounds"]):
                 round_start_time = time.time()
 
                 # 1. 客户端采样
@@ -368,8 +490,25 @@ class FederatedServer:
                             ]
                         )
 
+                # 保存检查点
+                checkpoint_every = self.config.get("checkpoint_every", 1)
+                if (round_idx + 1) % checkpoint_every == 0:
+                    checkpoint_dir = Path(
+                        self.config.get("checkpoint_dir", self.results_dir / "checkpoints")
+                    )
+                    self.save_checkpoint(round_idx, checkpoint_dir)
+
         total_duration = time.time() - training_start_time
         logger.info(f"Training Finished. Total Time: {total_duration/60:.2f} min")
+
+        # 保存最终检查点
+        final_checkpoint_dir = Path(
+            self.config.get("checkpoint_dir", self.results_dir / "checkpoints")
+        )
+        final_checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        final_state = CheckpointState.from_server(self, self.config["rounds"] - 1)
+        final_state.save(final_checkpoint_dir / "checkpoint_final.pth")
+        logger.info(f"Final checkpoint saved: {final_checkpoint_dir / 'checkpoint_final.pth'}")
 
         # 7. 保存最终模型
         param_suffix = f"T{self.config['kd_T']}_ka{self.config['kd_alpha']}_fa{self.config['feat_alpha']}"
