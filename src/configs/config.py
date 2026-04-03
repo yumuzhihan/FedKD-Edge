@@ -12,6 +12,9 @@ DEFAULT_CONFIG = {
     "num_workers": 10,  # 多进程数量
     "num_classes": 10,  # 类别数量
     "client_classes": 2,  # 每个客户端的类别数
+    "partition_mode": "pathological",  # iid, pathological
+    "partition_seed": None,  # None 时跟随训练 seed
+    "partition_path": None,  # 手动指定划分文件时优先使用
     # --- 联邦学习设置 ---
     "rounds": 100,  # 总通讯轮次
     "num_users": 10,  # 客户端总数
@@ -35,6 +38,6 @@ DEFAULT_CONFIG = {
     "weights_dir": str(PROJECT_ROOT / "weights"),
     "results_dir": str(PROJECT_ROOT / "results" / "unified_logs"),
     # --- 检查点设置 ---
-    "checkpoint_every": 1,  # 每N轮保存检查点
+    "checkpoint_every": 5,  # 每N轮保存检查点
     "checkpoint_dir": None,  # None时使用 results_dir/checkpoints
 }

@@ -1,4 +1,5 @@
 import argparse
+import csv
 import os
 import random
 import numpy as np
@@ -15,6 +16,7 @@ warnings.filterwarnings(
 sys.path.append(str(Path(__file__).parent))
 
 from src.configs.config import DEFAULT_CONFIG
+from src.data.partition import get_partition_tag
 from src.server.worker import FederatedServer
 from src.server.checkpoint import CheckpointManager
 from src.utils.get_logger import LoggerFactory
@@ -60,6 +62,25 @@ def parse_args():
     )
     parser.add_argument(
         "--client_classes", type=int, default=DEFAULT_CONFIG["client_classes"]
+    )
+    parser.add_argument(
+        "--partition_mode",
+        type=str,
+        default=DEFAULT_CONFIG["partition_mode"],
+        choices=["iid", "pathological"],
+        help="Dataset partition mode",
+    )
+    parser.add_argument(
+        "--partition_seed",
+        type=int,
+        default=DEFAULT_CONFIG["partition_seed"],
+        help="Random seed used for dataset partitioning",
+    )
+    parser.add_argument(
+        "--partition_path",
+        type=str,
+        default=DEFAULT_CONFIG["partition_path"],
+        help="Optional explicit partition file path",
     )
 
     # 3. 联邦参数
@@ -114,9 +135,7 @@ def parse_args():
     )
 
     # 路径覆盖 (可选)
-    parser.add_argument(
-        "--data_root", type=str, default=DEFAULT_CONFIG["data_root"]
-    )
+    parser.add_argument("--data_root", type=str, default=DEFAULT_CONFIG["data_root"])
     parser.add_argument(
         "--weights_dir", type=str, default=DEFAULT_CONFIG["weights_dir"]
     )
@@ -128,15 +147,16 @@ def parse_args():
     parser.add_argument(
         "--resume",
         type=str,
-        default=None,
+        default="auto",
         help="Path to checkpoint file to resume from. "
-        "If 'auto', automatically finds the latest matching checkpoint.",
+        "Use 'auto' to automatically find the latest matching checkpoint. "
+        "Use 'none' to always start from scratch.",
     )
     parser.add_argument(
         "--checkpoint_every",
         type=int,
         default=DEFAULT_CONFIG["checkpoint_every"],
-        help="Save checkpoint every N rounds.",
+        help="Overwrite the experiment checkpoint every N rounds.",
     )
     parser.add_argument(
         "--checkpoint_dir",
@@ -149,6 +169,64 @@ def parse_args():
     return args
 
 
+def _build_result_csv_pattern(config):
+    param_suffix = f"T{config['kd_T']}_ka{config['kd_alpha']}_fa{config['feat_alpha']}"
+    experiment_prefix = (
+        f"{config['strategy']}_{config['dataset']}_{config['partition_tag']}_"
+        f"seed{config['seed']}"
+    )
+    return (
+        f"log_{experiment_prefix}_rounds{config['rounds']}_"
+        f"hybrid{config['hybrid_bata']}_{param_suffix}_*.csv"
+    )
+
+
+def _get_csv_max_round(csv_path):
+    max_round = 0
+    with open(csv_path, "r", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        if reader.fieldnames is None or "Round" not in reader.fieldnames:
+            logger.warning(f"CSV missing 'Round' column, ignoring: {csv_path}")
+            return 0
+
+        for row in reader:
+            round_value = row.get("Round")
+            if not round_value:
+                continue
+            try:
+                max_round = max(max_round, int(round_value))
+            except ValueError:
+                logger.warning(
+                    f"Invalid Round value '{round_value}' in CSV, ignoring: {csv_path}"
+                )
+
+    return max_round
+
+
+def should_skip_training(config):
+    results_dir = Path(config["results_dir"])
+    if not results_dir.exists():
+        return False
+
+    csv_pattern = _build_result_csv_pattern(config)
+    matched_csv_files = sorted(
+        results_dir.glob(csv_pattern),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+
+    for csv_path in matched_csv_files:
+        max_round = _get_csv_max_round(csv_path)
+        if max_round >= config["rounds"]:
+            logger.info(
+                f"Found completed result CSV: {csv_path} (max round: {max_round}). "
+                f"Requested rounds: {config['rounds']}. Skipping training."
+            )
+            return True
+
+    return False
+
+
 def main():
     # 1. 获取参数
     args = parse_args()
@@ -156,6 +234,9 @@ def main():
     # 2. 合并配置 (命令行参数覆盖默认配置)
     config = DEFAULT_CONFIG.copy()
     config.update(vars(args))
+    if config["partition_seed"] is None:
+        config["partition_seed"] = config["seed"]
+    config["partition_tag"] = get_partition_tag(config)
 
     # 3. 设置随机种子
     set_seed(config["seed"])
@@ -167,14 +248,21 @@ def main():
         logger.info(f"{k}: {v}")
     logger.info("-------------------------------------")
 
+    if should_skip_training(config):
+        return
+
     # 5. 实例化并运行 Server
     try:
         server = FederatedServer(config)
 
         # 处理检查点路径
         resume_path = None
-        if config.get("resume"):
-            if config["resume"] == "auto":
+        resume_mode = config.get("resume")
+        if isinstance(resume_mode, str):
+            resume_mode = resume_mode.strip()
+
+        if resume_mode and str(resume_mode).lower() != "none":
+            if str(resume_mode).lower() == "auto":
                 # 自动查找最新检查点
                 checkpoint_dir = Path(
                     config.get("checkpoint_dir")
@@ -185,6 +273,7 @@ def main():
                     config["strategy"],
                     config["dataset"],
                     config["seed"],
+                    config["partition_tag"],
                 )
                 if resume_path is None:
                     logger.warning(
@@ -193,7 +282,7 @@ def main():
                 else:
                     logger.info(f"Auto-found checkpoint: {resume_path}")
             else:
-                resume_path = Path(config["resume"])
+                resume_path = Path(str(resume_mode))
                 if not resume_path.exists():
                     raise FileNotFoundError(f"Checkpoint not found: {resume_path}")
 

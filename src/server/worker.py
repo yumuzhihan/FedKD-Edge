@@ -5,7 +5,6 @@ import time
 import csv
 import numpy as np
 import copy
-import re
 from typing import Optional
 from pathlib import Path
 from torch.utils.data import DataLoader, Subset, Dataset
@@ -15,6 +14,7 @@ from src.models.student_cnn import StudentCNN
 from src.models.teacher_cnn import TeacherCNN
 from src.models.feature_adapter import FeatureAdapter
 from src.data.dataset import FastTensorDataset, get_fast_transforms
+from src.data.partition import ensure_partition_file, get_partition_tag
 from src.trainers import (
     CachedKDTrainer,
     FedAvgTrainer,
@@ -110,6 +110,8 @@ class FederatedServer:
         self.config = config
         self.device = torch.device(config["device"])
         self.strategy = config["strategy"]
+        self.partition_tag = config.get("partition_tag") or get_partition_tag(config)
+        self.config["partition_tag"] = self.partition_tag
 
         # 路径设置
         self.data_root = Path(config["data_root"])
@@ -123,12 +125,11 @@ class FederatedServer:
         self.dataset_test: Optional[Dataset] = None
 
         # 2. 加载数据分区
-        self._load_partitions(self.config["client_classes"])
+        self._load_partitions()
 
         self._init_test_dataset()
-
-        # 4. 初始化日志
-        self._init_csv_logger()
+        self.csv_filename = None
+        self.csv_path = None
 
     def _init_models(self):
         """初始化 Global Student, Teacher (可选), Adapter (可选)"""
@@ -173,19 +174,19 @@ class FederatedServer:
             self.w_adapter = {k: v.cpu() for k, v in net_adapter.state_dict().items()}
             del net_adapter
 
-    def _load_partitions(self, client_num=2):
-        """加载 Non-IID 数据分区"""
-        partition_file = (
-            self.data_root
-            / "partitions"
-            / f"noniid_{self.config['dataset']}_k{self.config['num_users']}_c{client_num}.pkl"
-        )
-        if not partition_file.exists():
-            raise FileNotFoundError(f"Partition file not found: {partition_file}")
+    def _load_partitions(self):
+        """自动生成并加载数据分区"""
+        partition_file = ensure_partition_file(self.config, self.data_root)
 
         logger.info(f"Loading partitions from {partition_file}")
         with open(partition_file, "rb") as f:
             self.dict_users = pickle.load(f)
+
+    def _experiment_prefix(self):
+        return (
+            f"{self.strategy}_{self.config['dataset']}_{self.partition_tag}_"
+            f"seed{self.config['seed']}"
+        )
 
     def _init_test_dataset(self):
         """加载测试集用于 Server 端评估"""
@@ -199,11 +200,20 @@ class FederatedServer:
         )
 
     def _init_csv_logger(self):
+        if self.csv_path is not None:
+            return
+
         timestamp = time.strftime("%Y%m%d-%H%M%S")
 
         # 优化文件名：包含关键蒸馏参数
-        param_suffix = f"T{self.config['kd_T']}_ka{self.config['kd_alpha']}_fa{self.config['feat_alpha']}"
-        self.csv_filename = f"log_{self.strategy}_{self.config['dataset']}_seed{self.config['seed']}_rounds{self.config["rounds"]}_hybrid{self.config["hybrid_bata"]}_{param_suffix}_{timestamp}.csv"
+        param_suffix = (
+            f"T{self.config['kd_T']}_ka{self.config['kd_alpha']}_"
+            f"fa{self.config['feat_alpha']}"
+        )
+        self.csv_filename = (
+            f"log_{self._experiment_prefix()}_rounds{self.config['rounds']}_"
+            f"hybrid{self.config['hybrid_bata']}_{param_suffix}_{timestamp}.csv"
+        )
 
         self.csv_path = self.results_dir / self.csv_filename
 
@@ -270,17 +280,16 @@ class FederatedServer:
         """获取恢复后的起始轮次"""
         return checkpoint.round_idx + 1
 
+    def _checkpoint_path(self, checkpoint_dir: Path) -> Path:
+        """为当前实验返回唯一的检查点路径。"""
+        return checkpoint_dir / f"checkpoint_{self._experiment_prefix()}.pth"
+
     def save_checkpoint(self, round_idx: int, checkpoint_dir: Path):
         """保存当前轮次的检查点"""
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
-        # 构建文件名
-        timestamp = time.strftime("%Y%m%d-%H%M%S")
-        filename = (
-            f"checkpoint_{self.config['strategy']}_{self.config['dataset']}_"
-            f"seed{self.config['seed']}_round{round_idx}_{timestamp}.pth"
-        )
-        checkpoint_path = checkpoint_dir / filename
+        # 同一实验始终覆盖同一个 checkpoint，避免每轮生成新文件。
+        checkpoint_path = self._checkpoint_path(checkpoint_dir)
 
         # 创建并保存检查点状态
         state = CheckpointState.from_server(self, round_idx)
@@ -288,33 +297,7 @@ class FederatedServer:
 
         logger.info(f"Checkpoint saved: {checkpoint_path}")
 
-        # 清理旧检查点（保留最近 N 个）
-        self._cleanup_old_checkpoints(checkpoint_dir, keep_recent=3)
-
         return checkpoint_path
-
-    def _cleanup_old_checkpoints(
-        self, checkpoint_dir: Path, keep_recent: int = 3
-    ):
-        """清理旧的检查点文件，保留最近的 N 个"""
-        # 收集所有匹配的检查点，按修改时间排序
-        checkpoints = []
-        pattern = re.compile(
-            rf"checkpoint_{self.config['strategy']}_{self.config['dataset']}_"
-            rf"seed{self.config['seed']}_round\d+_\d+\.pth"
-        )
-        for f in checkpoint_dir.glob("checkpoint_*.pth"):
-            if pattern.match(f.name):
-                checkpoints.append((f.stat().st_mtime, f))
-
-        if len(checkpoints) <= keep_recent:
-            return
-
-        # 删除最旧的检查点
-        checkpoints.sort()
-        for _, path in checkpoints[:-keep_recent]:
-            logger.info(f"Removing old checkpoint: {path}")
-            path.unlink()
 
     def evaluate(self):
         """Server 端评估函数"""
@@ -374,7 +357,9 @@ class FederatedServer:
             checkpoint = CheckpointState.load(resume_checkpoint)
 
             # 验证兼容性
-            compat_warnings = CheckpointManager.validate_checkpoint(checkpoint, self.config)
+            compat_warnings = CheckpointManager.validate_checkpoint(
+                checkpoint, self.config
+            )
             for warn in compat_warnings:
                 logger.warning(warn)
 
@@ -388,6 +373,9 @@ class FederatedServer:
 
             logger.info(f"Resuming from round {start_round}/{self.config['rounds']}")
 
+        if self.csv_path is None:
+            self._init_csv_logger()
+
         # 启动多进程 Pool
         # 注意: initargs 传入 data_root 确保子进程能找到路径
         with mp.Pool(
@@ -395,7 +383,6 @@ class FederatedServer:
             initializer=init_worker,
             initargs=(self.config["dataset"], self.data_root),
         ) as pool:
-
             for round_idx in range(start_round, self.config["rounds"]):
                 round_start_time = time.time()
 
@@ -468,9 +455,9 @@ class FederatedServer:
                 eta_seconds = avg_time_per_round * remaining_rounds
 
                 logger.info(
-                    f"Round {round_idx+1}/{self.config['rounds']} | "
+                    f"Round {round_idx + 1}/{self.config['rounds']} | "
                     f"Time: {duration:.2f}s | "
-                    f"ETA: {eta_seconds/60:.2f} min | "
+                    f"ETA: {eta_seconds / 60:.2f} min | "
                     f"Test Acc: {test_acc:.2f}% | Test Loss: {test_loss:.4f}"
                 )
 
@@ -494,25 +481,32 @@ class FederatedServer:
                 checkpoint_every = self.config.get("checkpoint_every", 1)
                 if (round_idx + 1) % checkpoint_every == 0:
                     checkpoint_dir = Path(
-                        self.config.get("checkpoint_dir", self.results_dir / "checkpoints")
+                        self.config.get("checkpoint_dir")
+                        or self.results_dir / "checkpoints"
                     )
                     self.save_checkpoint(round_idx, checkpoint_dir)
 
         total_duration = time.time() - training_start_time
-        logger.info(f"Training Finished. Total Time: {total_duration/60:.2f} min")
+        logger.info(f"Training Finished. Total Time: {total_duration / 60:.2f} min")
 
-        # 保存最终检查点
+        # 保存最终检查点，确保最终轮结果一定落盘。
         final_checkpoint_dir = Path(
-            self.config.get("checkpoint_dir", self.results_dir / "checkpoints")
+            self.config.get("checkpoint_dir") or self.results_dir / "checkpoints"
         )
-        final_checkpoint_dir.mkdir(parents=True, exist_ok=True)
-        final_state = CheckpointState.from_server(self, self.config["rounds"] - 1)
-        final_state.save(final_checkpoint_dir / "checkpoint_final.pth")
-        logger.info(f"Final checkpoint saved: {final_checkpoint_dir / 'checkpoint_final.pth'}")
+        final_checkpoint_path = self.save_checkpoint(
+            self.config["rounds"] - 1, final_checkpoint_dir
+        )
+        logger.info(f"Final checkpoint saved: {final_checkpoint_path}")
 
         # 7. 保存最终模型
-        param_suffix = f"T{self.config['kd_T']}_ka{self.config['kd_alpha']}_fa{self.config['feat_alpha']}"
-        save_name = f"{self.strategy}_{self.config['dataset']}_seed{self.config['seed']}_rounds{self.config["rounds"]}_hybrid{self.config["hybrid_bata"]}_{param_suffix}.pth"
+        param_suffix = (
+            f"T{self.config['kd_T']}_ka{self.config['kd_alpha']}_"
+            f"fa{self.config['feat_alpha']}"
+        )
+        save_name = (
+            f"{self._experiment_prefix()}_rounds{self.config['rounds']}_"
+            f"hybrid{self.config['hybrid_bata']}_{param_suffix}.pth"
+        )
         torch.save(
             self.net_glob.state_dict(), self.results_dir / ("model_" + save_name)
         )
