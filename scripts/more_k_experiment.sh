@@ -13,70 +13,70 @@ echo "====================================================="
 echo ">>> 开始训练 CIFAR-10 (client_classes = 4) <<<"
 
 # 1. Baseline (FedAvg)
-./.venv/bin/python main.py --dataset CIFAR10 --seed 42 --rounds 300 --num_workers 4 --client_classes 4 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --seed 3407 --rounds 300 --num_workers 4 --client_classes 4 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --seed 2026 --rounds 300 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --seed 42 --rounds 150 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --seed 3407 --rounds 150 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --seed 2026 --rounds 150 --num_workers 4 --client_classes 4 --num_classes 10
 
 # 2. Logit KD
-./.venv/bin/python main.py --dataset CIFAR10 --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 42 --rounds 300 --num_workers 4 --client_classes 4 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 3407 --rounds 300 --num_workers 4 --client_classes 4 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 2026 --rounds 300 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 42 --rounds 150 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 3407 --rounds 150 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 2026 --rounds 150 --num_workers 4 --client_classes 4 --num_classes 10
 
 # 3. Feature KD
-./.venv/bin/python main.py --dataset CIFAR10 --strategy feature_kd --feat_alpha 0.5 --seed 42 --rounds 300 --num_workers 4 --client_classes 4 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --strategy feature_kd --feat_alpha 0.5 --seed 3407 --rounds 300 --num_workers 4 --client_classes 4 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --strategy feature_kd --feat_alpha 0.5 --seed 2026 --rounds 300 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --strategy feature_kd --feat_alpha 0.5 --seed 42 --rounds 150 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --strategy feature_kd --feat_alpha 0.5 --seed 3407 --rounds 150 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --strategy feature_kd --feat_alpha 0.5 --seed 2026 --rounds 150 --num_workers 4 --client_classes 4 --num_classes 10
 
 # 4. Hybrid KD
-./.venv/bin/python main.py --dataset CIFAR10 --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 300 --seed 42 --num_workers 4 --client_classes 4 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 300 --seed 3407 --num_workers 4 --client_classes 4 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 300 --seed 2026 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 150 --seed 42 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 150 --seed 3407 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 150 --seed 2026 --num_workers 4 --client_classes 4 --num_classes 10
 
 
 echo ">>> 开始训练 CIFAR-10 (client_classes = 6) <<<"
 
 # 1. Baseline (FedAvg)
-./.venv/bin/python main.py --dataset CIFAR10 --seed 42 --rounds 300 --num_workers 4 --client_classes 6 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --seed 3407 --rounds 300 --num_workers 4 --client_classes 6 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --seed 2026 --rounds 300 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --seed 42 --rounds 150 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --seed 3407 --rounds 150 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --seed 2026 --rounds 150 --num_workers 4 --client_classes 6 --num_classes 10
 
 # 2. Logit KD
-./.venv/bin/python main.py --dataset CIFAR10 --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 42 --rounds 300 --num_workers 4 --client_classes 6 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 3407 --rounds 300 --num_workers 4 --client_classes 6 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 2026 --rounds 300 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 42 --rounds 150 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 3407 --rounds 150 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 2026 --rounds 150 --num_workers 4 --client_classes 6 --num_classes 10
 
 # 3. Feature KD
-./.venv/bin/python main.py --dataset CIFAR10 --strategy feature_kd --feat_alpha 0.5 --seed 42 --rounds 300 --num_workers 4 --client_classes 6 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --strategy feature_kd --feat_alpha 0.5 --seed 3407 --rounds 300 --num_workers 4 --client_classes 6 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --strategy feature_kd --feat_alpha 0.5 --seed 2026 --rounds 300 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --strategy feature_kd --feat_alpha 0.5 --seed 42 --rounds 150 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --strategy feature_kd --feat_alpha 0.5 --seed 3407 --rounds 150 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --strategy feature_kd --feat_alpha 0.5 --seed 2026 --rounds 150 --num_workers 4 --client_classes 6 --num_classes 10
 
 # 4. Hybrid KD
-./.venv/bin/python main.py --dataset CIFAR10 --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 300 --seed 42 --num_workers 4 --client_classes 6 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 300 --seed 3407 --num_workers 4 --client_classes 6 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 300 --seed 2026 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 150 --seed 42 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 150 --seed 3407 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 150 --seed 2026 --num_workers 4 --client_classes 6 --num_classes 10
 
 
 echo ">>> 开始训练 CIFAR-10 IID <<<"
 
 # 1. Baseline (FedAvg)
-./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --seed 42 --rounds 300 --num_workers 4 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --seed 3407 --rounds 300 --num_workers 4 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --seed 2026 --rounds 300 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --seed 42 --rounds 150 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --seed 3407 --rounds 150 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --seed 2026 --rounds 150 --num_workers 4 --num_classes 10
 
 # 2. Logit KD
-./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 42 --rounds 300 --num_workers 4 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 3407 --rounds 300 --num_workers 4 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 2026 --rounds 300 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 42 --rounds 150 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 3407 --rounds 150 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 2026 --rounds 150 --num_workers 4 --num_classes 10
 
 # 3. Feature KD
-./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --strategy feature_kd --feat_alpha 0.5 --seed 42 --rounds 300 --num_workers 4 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --strategy feature_kd --feat_alpha 0.5 --seed 3407 --rounds 300 --num_workers 4 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --strategy feature_kd --feat_alpha 0.5 --seed 2026 --rounds 300 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --strategy feature_kd --feat_alpha 0.5 --seed 42 --rounds 150 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --strategy feature_kd --feat_alpha 0.5 --seed 3407 --rounds 150 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --strategy feature_kd --feat_alpha 0.5 --seed 2026 --rounds 150 --num_workers 4 --num_classes 10
 
 # 4. Hybrid KD
-./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 300 --seed 42 --num_workers 4 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 300 --seed 3407 --num_workers 4 --num_classes 10
-./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 300 --seed 2026 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 150 --seed 42 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 150 --seed 3407 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset CIFAR10 --partition_mode iid --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 150 --seed 2026 --num_workers 4 --num_classes 10
 
 
 ######################################################################
@@ -86,70 +86,70 @@ echo ">>> 开始训练 CIFAR-10 IID <<<"
 echo ">>> 开始训练 FashionMNIST (client_classes = 4) <<<"
 
 # 1. Baseline (FedAvg)
-./.venv/bin/python main.py --dataset FashionMNIST --seed 42 --rounds 100 --num_workers 4 --client_classes 4 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --seed 3407 --rounds 100 --num_workers 4 --client_classes 4 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --seed 2026 --rounds 100 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --seed 42 --rounds 80 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --seed 3407 --rounds 80 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --seed 2026 --rounds 80 --num_workers 4 --client_classes 4 --num_classes 10
 
 # 2. Logit KD
-./.venv/bin/python main.py --dataset FashionMNIST --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 42 --rounds 100 --num_workers 4 --client_classes 4 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 3407 --rounds 100 --num_workers 4 --client_classes 4 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 2026 --rounds 100 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 42 --rounds 80 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 3407 --rounds 80 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 2026 --rounds 80 --num_workers 4 --client_classes 4 --num_classes 10
 
 # 3. Feature KD
-./.venv/bin/python main.py --dataset FashionMNIST --strategy feature_kd --feat_alpha 0.5 --seed 42 --rounds 100 --num_workers 4 --client_classes 4 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --strategy feature_kd --feat_alpha 0.5 --seed 3407 --rounds 100 --num_workers 4 --client_classes 4 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --strategy feature_kd --feat_alpha 0.5 --seed 2026 --rounds 100 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --strategy feature_kd --feat_alpha 0.5 --seed 42 --rounds 80 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --strategy feature_kd --feat_alpha 0.5 --seed 3407 --rounds 80 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --strategy feature_kd --feat_alpha 0.5 --seed 2026 --rounds 80 --num_workers 4 --client_classes 4 --num_classes 10
 
 # 4. Hybrid KD
-./.venv/bin/python main.py --dataset FashionMNIST --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 100 --seed 42 --num_workers 4 --client_classes 4 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 100 --seed 3407 --num_workers 4 --client_classes 4 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 100 --seed 2026 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 80 --seed 42 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 80 --seed 3407 --num_workers 4 --client_classes 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 80 --seed 2026 --num_workers 4 --client_classes 4 --num_classes 10
 
 
 echo ">>> 开始训练 FashionMNIST (client_classes = 6) <<<"
 
 # 1. Baseline (FedAvg)
-./.venv/bin/python main.py --dataset FashionMNIST --seed 42 --rounds 100 --num_workers 4 --client_classes 6 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --seed 3407 --rounds 100 --num_workers 4 --client_classes 6 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --seed 2026 --rounds 100 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --seed 42 --rounds 80 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --seed 3407 --rounds 80 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --seed 2026 --rounds 80 --num_workers 4 --client_classes 6 --num_classes 10
 
 # 2. Logit KD
-./.venv/bin/python main.py --dataset FashionMNIST --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 42 --rounds 100 --num_workers 4 --client_classes 6 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 3407 --rounds 100 --num_workers 4 --client_classes 6 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 2026 --rounds 100 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 42 --rounds 80 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 3407 --rounds 80 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 2026 --rounds 80 --num_workers 4 --client_classes 6 --num_classes 10
 
 # 3. Feature KD
-./.venv/bin/python main.py --dataset FashionMNIST --strategy feature_kd --feat_alpha 0.5 --seed 42 --rounds 100 --num_workers 4 --client_classes 6 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --strategy feature_kd --feat_alpha 0.5 --seed 3407 --rounds 100 --num_workers 4 --client_classes 6 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --strategy feature_kd --feat_alpha 0.5 --seed 2026 --rounds 100 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --strategy feature_kd --feat_alpha 0.5 --seed 42 --rounds 80 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --strategy feature_kd --feat_alpha 0.5 --seed 3407 --rounds 80 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --strategy feature_kd --feat_alpha 0.5 --seed 2026 --rounds 80 --num_workers 4 --client_classes 6 --num_classes 10
 
 # 4. Hybrid KD
-./.venv/bin/python main.py --dataset FashionMNIST --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 100 --seed 42 --num_workers 4 --client_classes 6 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 100 --seed 3407 --num_workers 4 --client_classes 6 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 100 --seed 2026 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 80 --seed 42 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 80 --seed 3407 --num_workers 4 --client_classes 6 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 80 --seed 2026 --num_workers 4 --client_classes 6 --num_classes 10
 
 
 echo ">>> 开始训练 FashionMNIST IID <<<"
 
 # 1. Baseline (FedAvg)
-./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --seed 42 --rounds 100 --num_workers 4 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --seed 3407 --rounds 100 --num_workers 4 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --seed 2026 --rounds 100 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --seed 42 --rounds 80 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --seed 3407 --rounds 80 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --seed 2026 --rounds 80 --num_workers 4 --num_classes 10
 
 # 2. Logit KD
-./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 42 --rounds 100 --num_workers 4 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 3407 --rounds 100 --num_workers 4 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 2026 --rounds 100 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 42 --rounds 80 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 3407 --rounds 80 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --strategy logit_kd --kd_T 1.0 --kd_alpha 0.5 --seed 2026 --rounds 80 --num_workers 4 --num_classes 10
 
 # 3. Feature KD
-./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --strategy feature_kd --feat_alpha 0.5 --seed 42 --rounds 100 --num_workers 4 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --strategy feature_kd --feat_alpha 0.5 --seed 3407 --rounds 100 --num_workers 4 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --strategy feature_kd --feat_alpha 0.5 --seed 2026 --rounds 100 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --strategy feature_kd --feat_alpha 0.5 --seed 42 --rounds 80 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --strategy feature_kd --feat_alpha 0.5 --seed 3407 --rounds 80 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --strategy feature_kd --feat_alpha 0.5 --seed 2026 --rounds 80 --num_workers 4 --num_classes 10
 
 # 4. Hybrid KD
-./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 100 --seed 42 --num_workers 4 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 100 --seed 3407 --num_workers 4 --num_classes 10
-./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 100 --seed 2026 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 80 --seed 42 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 80 --seed 3407 --num_workers 4 --num_classes 10
+./.venv/bin/python main.py --dataset FashionMNIST --partition_mode iid --strategy hybrid_kd --hybrid_bata 0.8 --kd_T 0.8 --kd_alpha 0.8 --feat_alpha 0.5 --rounds 80 --seed 2026 --num_workers 4 --num_classes 10
 
 echo "====================================================="
 echo "所有补充实验运行完毕！"

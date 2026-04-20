@@ -203,6 +203,15 @@ class FederatedServer:
         if self.csv_path is not None:
             return
 
+        resume_csv_path = self.config.get("resume_csv_path")
+        if resume_csv_path:
+            resume_csv_path = Path(resume_csv_path)
+            if resume_csv_path.exists():
+                self.csv_path = resume_csv_path
+                self.csv_filename = resume_csv_path.name
+                logger.info(f"Resuming CSV logging at: {self.csv_path}")
+                return
+
         timestamp = time.strftime("%Y%m%d-%H%M%S")
 
         # 优化文件名：包含关键蒸馏参数
@@ -250,14 +259,16 @@ class FederatedServer:
             self.w_adapter = checkpoint.w_adapter
 
         # 验证 CSV 文件存在且格式正确
-        csv_path = Path(checkpoint.csv_path)
-        if not csv_path.exists():
+        csv_path_str = checkpoint.csv_path or self.config.get("resume_csv_path")
+        csv_path = Path(csv_path_str) if csv_path_str else None
+        if csv_path is None or not csv_path.exists():
             logger.warning(f"Checkpoint CSV not found at {csv_path}. Recreating...")
             self._init_csv_logger()
         else:
             self.csv_path = csv_path
+            self.csv_filename = csv_path.name
             # 验证CSV格式
-            with open(self.csv_path, "r") as f:
+            with open(self.csv_path, "r", newline="", encoding="utf-8") as f:
                 reader = csv.reader(f)
                 header = next(reader)
                 expected_header = [

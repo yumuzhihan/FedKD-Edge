@@ -203,10 +203,10 @@ def _get_csv_max_round(csv_path):
     return max_round
 
 
-def should_skip_training(config):
+def _find_matching_result_csv(config):
     results_dir = Path(config["results_dir"])
     if not results_dir.exists():
-        return False
+        return None
 
     csv_pattern = _build_result_csv_pattern(config)
     matched_csv_files = sorted(
@@ -214,15 +214,21 @@ def should_skip_training(config):
         key=lambda path: path.stat().st_mtime,
         reverse=True,
     )
+    return matched_csv_files[0] if matched_csv_files else None
 
-    for csv_path in matched_csv_files:
-        max_round = _get_csv_max_round(csv_path)
-        if max_round >= config["rounds"]:
-            logger.info(
-                f"Found completed result CSV: {csv_path} (max round: {max_round}). "
-                f"Requested rounds: {config['rounds']}. Skipping training."
-            )
-            return True
+
+def should_skip_training(config):
+    matched_csv = _find_matching_result_csv(config)
+    if matched_csv is None:
+        return False
+
+    max_round = _get_csv_max_round(matched_csv)
+    if max_round >= config["rounds"]:
+        logger.info(
+            f"Found completed result CSV: {matched_csv} (max round: {max_round}). "
+            f"Requested rounds: {config['rounds']}. Skipping training."
+        )
+        return True
 
     return False
 
@@ -285,6 +291,14 @@ def main():
                 resume_path = Path(str(resume_mode))
                 if not resume_path.exists():
                     raise FileNotFoundError(f"Checkpoint not found: {resume_path}")
+
+        if resume_path is not None:
+            resume_csv_path = _find_matching_result_csv(config)
+            if resume_csv_path is not None:
+                config["resume_csv_path"] = str(resume_csv_path)
+                logger.info(
+                    f"Resume will append results to existing CSV: {resume_csv_path}"
+                )
 
         server.run(resume_checkpoint=resume_path)
     except Exception as e:
